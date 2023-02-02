@@ -5,7 +5,7 @@
 
 ### Start training
 
-```{Python}
+```Python
 model = YourNeuralNetwork(num_classes=10)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters())
@@ -16,8 +16,6 @@ hm = HyperModule(
     optimizer = optimizer,
     scheduler = None
 )
-
-# Train in testing mode
 hm.train(train_dataloader, valid_dataloader, save_path, num_epochs=100)
 ```
 
@@ -41,13 +39,14 @@ hm.train(train_dataloader, valid_dataloader, save_path, num_epochs=100)
 * `load()`: read *information* of neural network from the given path.
 * `save()`: save *information* to the given path.
 
+## Loading and Saving
 
-The *information* being loaded and saved in `HyperModule` is:
+The *information* being loaded and saved in `HyperModule` is
 
 * `state_dict` of neural network
 * `state_dict` of optimizer
 * `state_dict` of scheduler
 * number of epochs that neural network has been trained
 * training loss in each epoch
-* training accuracy in each epoch
+* validation accuracy in each epoch
 * testing accuracy

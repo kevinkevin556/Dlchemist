@@ -91,7 +91,7 @@ class HyperModule():
         device = torch.device('cuda')
         self.model.eval()
         batch_acc = []
-        softmax = torch.nn.Softmax()
+        softmax = torch.nn.Softmax(dim=1)
         with torch.no_grad():
             for images, targets in dataloader:
                 images, targets = images.to(device), targets.to(device)
@@ -132,7 +132,7 @@ class HyperModule():
      
     def get_prediction_(self, images, targets):
         preds = self.model(images)
-        softmax = torch.nn.Softmax()
+        softmax = torch.nn.Softmax(dim=1)
         pred_labels = torch.argmax(softmax(preds), dim=1)
         pred_labels = pred_labels.view(-1).detach().cpu().numpy()
         targets = targets.view(-1).detach().cpu().numpy()

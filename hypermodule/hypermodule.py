@@ -91,15 +91,24 @@ class HyperModule():
         device = torch.device('cuda')
         self.model.eval()
         batch_acc = []
-        softmax = torch.nn.Softmax(dim=1)
         with torch.no_grad():
             for images, targets in dataloader:
                 images, targets = images.to(device), targets.to(device)
-                preds = self.model(images)
-                probs = softmax(preds)
-                pred_labels = torch.argmax(probs, dim=1)
+                pred_labels = self.get_prediction_(images, targets, validation=True)
                 batch_acc.append((pred_labels == targets).type(torch.float32).mean().item())
         return batch_acc
+    
+    def get_prediction_(self, images, targets, validation=True):
+        preds = self.model(images)
+        softmax = torch.nn.Softmax(dim=1)
+        probs = softmax(preds)
+        pred_labels = torch.argmax(probs, dim=1)
+        if validation:
+            return pred_labels
+        else:
+            pred_labels = pred_labels.view(-1).detach().cpu().numpy()
+            targets = targets.view(-1).detach().cpu().numpy()
+            return pred_labels, targets
 
 
     # ------------------------ test() ----------------------------------------- #
@@ -116,7 +125,7 @@ class HyperModule():
         with torch.no_grad():
             for images, targets in dataloader:
                 images, targets = images.to(device), targets.to(device)
-                pred_labels, targets = self.get_prediction_(images, targets)
+                pred_labels, targets = self.get_prediction_(images, targets, validation=False)
                 np_pred_labels.append(pred_labels)
                 np_targets.append(targets)
 
@@ -129,14 +138,6 @@ class HyperModule():
         self.test_acc = np.mean(np_targets == np_pred_labels)
         print("\nTotal Acc:", np.mean(np_targets == np_pred_labels))
 
-     
-    def get_prediction_(self, images, targets):
-        preds = self.model(images)
-        softmax = torch.nn.Softmax(dim=1)
-        pred_labels = torch.argmax(softmax(preds), dim=1)
-        pred_labels = pred_labels.view(-1).detach().cpu().numpy()
-        targets = targets.view(-1).detach().cpu().numpy()
-        return pred_labels, targets
 
     def visualize_class_acc_(self, np_pred_labels, np_targets, class_names):
         conf_mat = sklearn.metrics.confusion_matrix(np_targets, np_pred_labels)

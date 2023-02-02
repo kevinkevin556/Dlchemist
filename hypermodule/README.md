@@ -1,12 +1,13 @@
+# HyperModule
 
-`HyperModule` is a wrapper for functions relative to training, validating and testing neural network. It also helps to log loss and validation accuracy during training and provide simple functions for loading and saving trained networks.
+`HyperModule` is a wrapper of functions for managing the training, validation, and testing processes of neural networks. With HyperModule, it is easier to monitor the progress of the training process by logging loss and validation accuracy. Additionally, HyperModule provides convenient functions for loading and saving pre-trained models, streamlining the entire process of working with neural networks.
 
 ## Usage
 
 ### Start training
 
 ```Python
-model = YourNeuralNetwork(num_classes=10)
+model = YourNeuralNetwork()
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters())
 

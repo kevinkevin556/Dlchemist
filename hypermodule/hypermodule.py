@@ -177,7 +177,10 @@ class HyperModule():
         self.model.to(device)
         
         self.optimizer.load_state_dict(state_dict["optimizer"])
-        self.scheduler.load_state_dict(state_dict["scheduler"])
+        if self.scheduler is not None:
+            self.scheduler.load_state_dict(state_dict["scheduler"])
+        else:
+            self.scheduler = None
         self.test_acc = state_dict["test_acc"]
 
         n_train_loss = len(state_dict["train_loss"])
@@ -197,7 +200,10 @@ class HyperModule():
         state_dict = {}
         state_dict["model"] = self.model.state_dict()
         state_dict["optimizer"] = self.optimizer.state_dict()
-        state_dict["scheduler"] = self.scheduler.state_dict()
+        if self.scheduler is not None:
+            state_dict["scheduler"] = self.scheduler.state_dict()
+        else:
+            state_dict["scheduler"] = None
         state_dict["epoch_trained"] = self.epoch_trained
         state_dict["train_loss"] = self.train_loss
         state_dict["valid_acc"] = self.valid_acc

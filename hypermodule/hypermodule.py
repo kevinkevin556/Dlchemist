@@ -81,7 +81,7 @@ class HyperModule():
             self.batch_acc = [np.nan]
             print(f"Train Loss: {batch_avg_loss:.3f}, Valid Acc: --- No Validation ---")
         else:
-            self.batch_acc = self.validate(*valid_dataloader)
+            self.batch_acc = self.validate(valid_dataloader)
             batch_avg_acc = np.mean(self.batch_acc)
             print(f"Train Loss: {batch_avg_loss:.3f}, Valid Acc:{batch_avg_acc:.3f}")
 

@@ -1,4 +1,5 @@
 import torch
+from torch.nn.functional import softmax
 from tqdm import tqdm
 import numpy as np
 import sklearn.metrics
@@ -100,8 +101,7 @@ class HyperModule():
     
     def get_prediction_(self, images, targets, validation=True):
         preds = self.model(images)
-        softmax = torch.nn.Softmax(dim=1)
-        probs = softmax(preds)
+        probs = softmax(preds, dim=1)
         pred_labels = torch.argmax(probs, dim=1)
         if validation:
             return pred_labels

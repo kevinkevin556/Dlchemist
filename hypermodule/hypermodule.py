@@ -45,7 +45,7 @@ class HyperModule():
                 self.save(save_path)
 
         # Save the model trained in the last epoch (if validation)
-        if not (None in valid_dataloader or valid_dataloader is None):
+        if valid_dataloader is not None:
             self.save(save_path+".final")
         # Clear training infomation            
         self.batch_loss, self.batch_acc = [], []
@@ -204,21 +204,3 @@ class HyperModule():
         state_dict["test_acc"] = self.test_acc
         torch.save(state_dict, path)
         print("State dict saved.")
-    
-
-    # ----------------------- get_state_dict() --------------------------------- #
-
-    def get_state_dict(self):
-        state_dict = {}
-        state_dict["model"] = self.model.state_dict()
-        state_dict["optimizer"] = self.optimizer.state_dict()
-        state_dict["scheduler"] = self.scheduler.state_dict()
-        state_dict["epoch_trained"] = self.epoch_trained
-        state_dict["train_loss"] = self.train_loss
-        state_dict["valid_acc"] = self.valid_acc
-        state_dict["test_acc"] = self.test_acc
-        return state_dict
-
-
-
-    

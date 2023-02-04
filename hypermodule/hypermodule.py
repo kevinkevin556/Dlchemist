@@ -20,7 +20,7 @@ class HyperModule():
 
     # ----------------------- train() --------------------------------------- #
 
-    def train(self, train_dataloader, valid_dataloader=None, save_path=None, num_epochs=1):
+    def train(self, train_dataloader, valid_dataloader=None, save_path=None, num_epochs=1, drop_final=False):
         device = torch.device('cuda')
         self.model.to(device)
         best_acc = 0 if len(self.valid_acc)==0 else max(self.valid_acc) 
@@ -45,8 +45,8 @@ class HyperModule():
                 best_acc = np.mean(self.batch_acc)
                 self.save(save_path)
 
-        # Save the model trained in the last epoch (if validation)
-        if valid_dataloader is not None:
+        # Save the model trained in the last epoch 
+        if not drop_final:
             self.save(save_path+".final")
         # Clear training infomation            
         self.batch_loss, self.batch_acc = [], []
@@ -90,6 +90,7 @@ class HyperModule():
 
     def validate(self, dataloader):
         device = torch.device('cuda')
+        self.model.to(device)
         self.model.eval()
         batch_acc = []
         with torch.no_grad():
@@ -113,7 +114,7 @@ class HyperModule():
 
     # ------------------------ test() ----------------------------------------- #
 
-    def test(self, dataloader, dataloader_f, load_path=None, confusion_matrix=True, class_names=None):
+    def test(self, dataloader, load_path=None, confusion_matrix=True, class_names=None):
         device = torch.device('cuda')
         self.model.to(device)
         if load_path is not None:

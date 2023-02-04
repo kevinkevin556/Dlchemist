@@ -41,13 +41,12 @@ class HyperModule():
             self.update_scheduler_()                    # Update scheduler based on training loss
             self.perform_validation_(valid_dataloader)  # Validation stage (or choose not to validate)
             self.update_history_()                      # Update training loss and validation acc.
+            self.save(save_path, verbose=False)         # Save the trained model
+            
             if np.mean(self.batch_acc) > best_acc:      # Save the best model (if any)
                 best_acc = np.mean(self.batch_acc)
-                self.save(save_path)
-
-        # Save the model trained in the last epoch 
-        if not drop_final:
-            self.save(save_path+".final")
+                self.save(save_path + ".best")
+                
         # Clear training infomation            
         self.batch_loss, self.batch_acc = [], []
         self.test_acc = None
@@ -170,7 +169,7 @@ class HyperModule():
 
     # ----------------------- load() ----------------------------------------- #
 
-    def load(self, path):
+    def load(self, path, verbose=True):
         device = torch.device('cuda')
         state_dict = torch.load(path)
         
@@ -192,12 +191,13 @@ class HyperModule():
         self.epoch_trained = n
         self.train_loss = state_dict["train_loss"][:n]
         self.valid_acc = state_dict["valid_acc"][:n]
-        print("State dict sucessfully loaded.")
+        if verbose:
+            print("State dict sucessfully loaded.")
 
 
     # ----------------------- save() ----------------------------------------- #
 
-    def save(self, path):
+    def save(self, path, verbose=True):
         state_dict = {}
         state_dict["model"] = self.model.state_dict()
         state_dict["optimizer"] = self.optimizer.state_dict()
@@ -210,4 +210,5 @@ class HyperModule():
         state_dict["valid_acc"] = self.valid_acc
         state_dict["test_acc"] = self.test_acc
         torch.save(state_dict, path)
-        print("State dict saved.")
+        if verbose:
+            print("State dict saved.")

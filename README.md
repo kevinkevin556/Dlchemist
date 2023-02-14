@@ -18,4 +18,4 @@ This repository presents a comprehensive collection of jupyter notbooks that rep
 ### Semantic Segmentation
 | Network | Dataset | Preprocess | Inference | Accuracy | Status |
 | --------| --------| -----------|----------| ------ | ---- |
-| U-Net | EM stacks (IBSI2012)  |  |  | 81.57 % | ![Building](https://img.shields.io/static/v1.svg?label=&message=Building&color=red)
+| U-Net | EM stacks (IBSI2012)  |  |  |  | ![Building](https://img.shields.io/static/v1.svg?label=&message=Building&color=red)

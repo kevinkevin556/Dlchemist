@@ -116,7 +116,7 @@ class HyperModule():
             pred_list = []
             target_list = []
             for images, targets in dataloader:
-                images,  = images.to(device), targets.to(device)
+                images, targets = images.to(device), targets.to(device)
                 pred_labels = self.predict_image_(images, numpy=numpy)
                 pred_labels = self.flatten2numpy_(pred_labels) if numpy else pred_labels
                 pred_list.append(pred_labels)

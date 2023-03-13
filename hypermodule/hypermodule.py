@@ -123,7 +123,7 @@ class HyperModule():
                 targets = self.flatten2numpy_(targets) if numpy else targets
                 target_list.append(target_list)
                 
-        output = (pred_list, target_list) if not return_target else pred_list
+        output = (pred_list, target_list) if return_target else pred_list
         return output
                     
 

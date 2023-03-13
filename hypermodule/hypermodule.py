@@ -121,7 +121,7 @@ class HyperModule():
                 pred_labels = self.flatten2numpy_(pred_labels) if numpy else pred_labels
                 pred_list.append(pred_labels)
                 targets = self.flatten2numpy_(targets) if numpy else targets
-                target_list.append(target_list)
+                target_list.append(targets)
                 
         output = (pred_list, target_list) if return_target else pred_list
         return output

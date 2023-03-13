@@ -2,7 +2,7 @@ import torch
 from torch.nn.functional import softmax
 from tqdm import tqdm
 import numpy as np
-import sklearn.metrics
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -84,6 +84,48 @@ class HyperModule():
             batch_avg_acc = np.mean(self.batch_acc)
             print(f"Train Loss: {batch_avg_loss:.3f}, Valid Acc:{batch_avg_acc:.3f}")
 
+    # ------------------------ predict() ------------------------------------- #
+
+    def predict(self, images=None, dataloader=None, numpy=False):
+        device = torch.device('cuda')
+        self.model.to(device)
+        self.model.eval()
+        if images is not None:
+            images = images.to(device)
+            return self.predict_image_(images, numpy=numpy)
+        if dataloader is not None:
+            return self.predict_dataloader_(dataloader, numpy=numpy)
+
+    def flatten2numpy_(self, tensor):
+        return tensor.view(-1).detach().cpu().numpy()
+
+    def predict_image_(self, images, numpy=False):
+        preds = self.model(images)
+        probs = softmax(preds, dim=1)
+        pred_labels = torch.argmax(probs, dim=1)
+        if numpy:
+            return self.flatten2numpy_(pred_labels)
+        else:
+            return pred_labels
+
+    def predict_dataloader_(self, dataloader, return_target=False, numpy=False):
+        device = torch.device('cuda')
+        self.model.to(device)
+        self.model.eval()
+        with torch.no_grad():
+            pred_list = []
+            target_list = []
+            for images, targets in dataloader:
+                images,  = images.to(device), targets.to(device)
+                pred_labels = self.predict_image_(images, numpy=numpy)
+                pred_labels = self.flatten2numpy_(pred_labels) if numpy else pred_labels
+                pred_list.append(pred_labels)
+                targets = self.flatten2numpy_(targets) if numpy else targets
+                target_list.append(target_list)
+                
+        output = (pred_list, target_list) if not return_target else pred_list
+        return output
+                    
 
     # ----------------------- validate() ------------------------------------- #
 
@@ -91,29 +133,16 @@ class HyperModule():
         device = torch.device('cuda')
         self.model.to(device)
         self.model.eval()
+        pred_list, target_list = self.predict_dataloader_(dataloader, return_target=True)
         batch_acc = []
-        with torch.no_grad():
-            for images, targets in dataloader:
-                images, targets = images.to(device), targets.to(device)
-                pred_labels = self.get_prediction_(images, targets, validation=True)
-                batch_acc.append((pred_labels == targets).type(torch.float32).mean().item())
+        for pred_labels, targets in zip(pred_list, target_list):
+            batch_acc.append((pred_labels == targets).type(torch.float32).mean().item())
         return batch_acc
-    
-    def get_prediction_(self, images, targets, validation=True):
-        preds = self.model(images)
-        probs = softmax(preds, dim=1)
-        pred_labels = torch.argmax(probs, dim=1)
-        if validation:
-            return pred_labels
-        else:
-            pred_labels = pred_labels.view(-1).detach().cpu().numpy()
-            targets = targets.view(-1).detach().cpu().numpy()
-            return pred_labels, targets
 
 
     # ------------------------ test() ----------------------------------------- #
 
-    def test(self, dataloader, load_path=None, confusion_matrix=True, class_names=None):
+    def test(self, dataloader, load_path=None, viz_conf=True, class_names=None, mode='image-classification'):
         device = torch.device('cuda')
         self.model.to(device)
         if load_path is not None:
@@ -121,29 +150,37 @@ class HyperModule():
         self.model.eval()
 
         # Obtain predictions and ground truths
-        np_pred_labels, np_targets = [], [] 
-        with torch.no_grad():
-            for images, targets in dataloader:
-                images, targets = images.to(device), targets.to(device)
-                pred_labels, targets = self.get_prediction_(images, targets, validation=False)
-                np_pred_labels.append(pred_labels)
-                np_targets.append(targets)
-
-        np_pred_labels = np.concatenate(np_pred_labels)
-        np_targets = np.concatenate(np_targets)
-        if confusion_matrix:
-            self.visualize_class_acc_(np_pred_labels, np_targets, class_names)
-
-        ## print total accuracy
-        self.test_acc = np.mean(np_targets == np_pred_labels)
-        print("\nTotal Acc:", np.mean(np_targets == np_pred_labels))
-
-
-    def visualize_class_acc_(self, np_pred_labels, np_targets, class_names):
-        conf_mat = sklearn.metrics.confusion_matrix(np_targets, np_pred_labels)
+        pred_list, target_list = self.predict_dataloader_(dataloader, return_target=True, numpy=True)
+        pred_labels = np.concatenate(pred_list).flatten()
+        targets = np.concatenate(target_list).flatten()
+        conf_mat = confusion_matrix(targets, pred_labels)
         conf_df = self.generate_confusion_df_(conf_mat, class_names)
-        self.plot_confusion_heatmap_(conf_df)
-        self.print_class_acc_(conf_df)
+
+        if mode == 'image-classification':
+            total_acc = np.mean(targets == pred_labels)
+            if viz_conf:                                    # plot confusion heatmap
+                self.plot_confusion_heatmap_(conf_df)    
+            print("\nTotal Acc:", total_acc)                # print total accuracy
+            self.print_class_acc(conf_df)                   # print class accuracy
+            self.test_acc = total_acc
+
+        if mode == "image-segmentation":
+            true_neg, false_pos, false_neg, true_pos = conf_mat.ravel()
+            pixel_acc = np.mean(targets == pred_labels)
+            iou = true_pos / (true_pos + false_neg + false_pos)
+            dice_score = 2*true_pos / (2*true_pos + false_neg + false_pos)
+            precision = true_pos / (true_pos + false_pos)
+            recall = true_pos / (true_pos + false_neg)
+            specificity = true_neg / (true_neg + false_pos)
+            print("Pixel Acc:", pixel_acc)                # print pixel accuracy
+            print("Jaccard index (=IoU):", iou)             # print intersection over union
+            print("Dice Score (=F1 score)", dice_score)     # print dice score
+            print("Dice loss:", 1-dice_score)
+            print("Precision:", precision)                  
+            print("Recall (=Sensitivity):", recall)          
+            print("Specificity (=Recall of 0):", specificity)
+            self.test_acc = dice_score
+
 
     def generate_confusion_df_(self, conf_mat, class_names):
         if class_names is not None:
@@ -164,7 +201,6 @@ class HyperModule():
             total = np.sum(conf_df.iloc[i, :])
             correct = conf_df.iloc[i, i]
             print(f"Acc of {conf_df.columns[i]}: {correct/total:.4f}")
-
 
 
     # ----------------------- load() ----------------------------------------- #

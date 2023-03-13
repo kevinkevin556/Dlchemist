@@ -160,7 +160,7 @@ class HyperModule():
             if viz_conf:                                    # plot confusion heatmap
                 self.plot_confusion_heatmap_(conf_df)    
             print("\nTotal Acc:", total_acc)                # print total accuracy
-            self.print_class_acc(conf_df)                   # print class accuracy
+            self.print_class_acc_(conf_df)                   # print class accuracy
             self.test_acc = total_acc
 
         if mode == "image-segmentation":
